@@ -60,7 +60,8 @@ run = async function() {
     console.log(`Sleeping for ${sleep_time}ms`, check);
     // Random Sleep to Avoid API Rate Limit Issues
     await sleep(sleep_time);
-    let healthcheck_slug = `${hostname}-${check}`;
+    let check_slug = check.replace('_', '-');
+    let healthcheck_slug = `${hostname}-${check_slug}`;
     console.error('Healthcheck Slug', healthcheck_slug);
 
     // Check Block
