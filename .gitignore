@@ -1,4 +1,5 @@
 node_modules
+healthchecks.json
 healthchecks.prod.json
 eth_status.json
 onomy_status.json
