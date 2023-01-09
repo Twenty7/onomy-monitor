@@ -5,7 +5,7 @@ const os = require("os");
 const { execSync } = require('child_process');
 let hostname = os.hostname();
 let path = __dirname;
-let healthchecks = require(`${path}/healthchecks.json`);
+let healthchecks = require(`${path}/config.json`);
 
 // ETH
 // let eth_main = 'https://nodes.mewapi.io/rpc/eth';
@@ -22,8 +22,12 @@ let onomy_main = 'http://44.213.44.5:26657';
 let onomy_testnet = 'http://3.88.76.0:26657'
 let onomy_local = 'http://localhost:26657';
 
+if (!healthchecks.etherscan_api_key) {
+  console.error('Missing config.json etherscan_api_key');
+  process.exit();
+}
 if (!healthchecks.healthcheckio_ping_key) {
-  console.error('Missing healthchecks.json healthcheckio_ping_key');
+  console.error('Missing config.json healthcheckio_ping_key');
   process.exit();
 }
 
@@ -54,9 +58,9 @@ run = async function() {
 
     let sleep_time = sleepTime();
     console.log(`Sleeping for ${sleep_time}ms`, check);
+    // Random Sleep to Avoid API Rate Limit Issues
     await sleep(sleep_time);
-hostname = 'nomtestnetsentry1'
-    let healthcheck_slug = `${hostname}-${check}-test`;
+    let healthcheck_slug = `${hostname}-${check}`;
     console.error('Healthcheck Slug', healthcheck_slug);
 
     // Check Block
