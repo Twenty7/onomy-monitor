@@ -1,23 +1,4 @@
 {
   "etherscan_api_key": "",
-  "eth": {
-    "beluga": "",
-    "nomtestnetval": "",
-    "nomtestnetsentry1": "",
-    "nomtestnetsentry2": "",
-    "nomsentry1": "",
-    "nomsentry2": ""
-  },
-  "onomy": {
-    "beluga": "",
-    "nomtestnetval": "",
-    "nomtestnetsentry1": "",
-    "nomtestnetsentry2": "",
-    "nomsentry1": "",
-    "nomsentry2": ""
-  },
-  "onomy_orchestrator": {
-    "beluga": "",
-    "nomtestnetval": ""
-  }
+  "healthcheckio_ping_key": ""
 }

@@ -4,16 +4,13 @@ const axios = require('axios');
 const os = require("os");
 const { execSync } = require('child_process');
 let hostname = os.hostname();
-let path = '/usr/local/lila-coin-scripts';
-// path = '/Volumes/devhd/crypto_projects/lila-coin-scripts';
-let healthchecks = require(`${path}/configs/healthchecks.json`);
+let path = __dirname;
+let healthchecks = require(`${path}/healthchecks.json`);
 
 // ETH
 // let eth_main = 'https://nodes.mewapi.io/rpc/eth';
 // todo: Check API Rate Limit
 let eth_main = `https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${healthchecks.etherscan_api_key}`;
-// let eth_rinkeby = 'https://rinkeby-light.eth.linkpool.io';
-let eth_rinkeby = `https://api-rinkeby.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${healthchecks.etherscan_api_key}`;
 let eth_goerli = `https://api-goerli.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${healthchecks.etherscan_api_key}`;
 let eth_local = 'http://localhost:8545';
 
@@ -25,47 +22,54 @@ let onomy_main = 'http://44.213.44.5:26657';
 let onomy_testnet = 'http://3.88.76.0:26657'
 let onomy_local = 'http://localhost:26657';
 
-// Coin / Healthcheck Type
-let coin = 'eth';
-var args = process.argv.slice(2);
-console.log('Args: ', args);
-if (args.length) {
-  coin = args[0];
+if (!healthchecks.healthcheckio_ping_key) {
+  console.error('Missing healthchecks.json healthcheckio_ping_key');
+  process.exit();
 }
 
-// Node Type
-let node_type = execSync(`${path}/scripts/node_type.sh`).toString().trim();
-console.log('Node Type', node_type);
+
+// Check / Coin / Healthcheck Type
+let check = 'eth';
+var args = process.argv.slice(2);
+console.log('Args: ', args);
+check_net = 'mainnet';
+check_host = null;
+if (!args.length) {
+  console.error(`${path}/monitor.js eth|onomy|onomy_orchestrator mainnet|testnet [http://localhost:8545]`);
+  process.exit();
+}
+if (args.length) {
+  check = args[0];
+}
+if (args.length >= 2) {
+  check_net = args[1];
+}
+if (args.length >= 3) {
+  check_host = args[2];
+}
 
 
 run = async function() {
   try {
-    let pub_block = null;
-    let local_block = null;
 
     let sleep_time = sleepTime();
-    console.log(`Sleeping for ${sleep_time}ms`, coin);
+    console.log(`Sleeping for ${sleep_time}ms`, check);
     await sleep(sleep_time);
-
-    let healthcheck_uid = null;
-    if (healthchecks[coin] && healthchecks[coin][hostname]) {
-      healthcheck_uid = healthchecks[coin][hostname];
-    } else {
-      console.error('Invalid Health Check UID', {coin, hostname});
-      throw Error(`Invalid Health Check UID - coin: ${coin} - host: ${hostname}`);
-    }
+hostname = 'nomtestnetsentry1'
+    let healthcheck_slug = `${hostname}-${check}-test`;
+    console.error('Healthcheck Slug', healthcheck_slug);
 
     // Check Block
     let healthy = false;
-    if (coin == 'eth' || coin == 'onomy') {
+    if (check == 'eth' || check == 'onomy') {
       healthy = await checkBlockStatus();
-    } else if (coin == 'onomy_orchestrator') { // Check Orchestrator
+    } else if (check == 'onomy_orchestrator') { // Check Orchestrator
       healthy = await checkOrchestratorStatus(hostname);
     }
 
-    console.log('HEALTHY', {coin, hostname, healthcheck_uid, healthy});
+    console.log('HEALTHY', {check, hostname, healthcheck_slug, healthy});
 
-    pingHealthcheck(healthcheck_uid, healthy);
+    pingHealthcheck(healthcheck_slug, healthy);
   } catch (err) {
     console.error(err);
   }
@@ -73,7 +77,10 @@ run = async function() {
 
 checkOrchestratorStatus = async function(hostname) {
   try {
-    let json = execSync(`cd ${path}/scripts && ./onomy_validator_status.sh`);
+    console.log('Checking Orchestrator Status');
+    let val_address = execSync(`omg validator show Cosmos.Holdings`).toString().trim();
+    console.log('Val Address', val_address);
+    let json = execSync(`onomyd -o json query staking validator ${val_address}`);
     let vstatus = JSON.parse(json);
     let online = true;
     if (vstatus.jailed) {
@@ -91,7 +98,7 @@ checkOrchestratorStatus = async function(hostname) {
     }
 
     // Record Orchestrator Status
-    let file = `${path}/${coin}_status.json`;
+    let file = `${path}/${check}_status.json`;
     let status = {vals: []};
     if (fs.existsSync(file)) {
       status = require(file);
@@ -116,7 +123,7 @@ checkOrchestratorStatus = async function(hostname) {
     console.log('Online', online);
     console.log('Bad Cnt', bad_cnt);
     if (!online && bad_cnt == 5) { // Only Restart at exactly 5 bad checks in a row
-      console.log('Orchestrator NEEDS RESTART');
+      console.error('Orchestrator NEEDS RESTART');
       // console.log('Restarting Validator...(disabled)');
       // execSync('sudo systemctl restart onomy_orchestrator.service');
     }
@@ -131,37 +138,35 @@ checkOrchestratorStatus = async function(hostname) {
 checkBlockStatus = async function() {
   let diff = false;
   try {
-    if (coin == 'eth') {
-      let eth_check = ( (hostname == 'nomsentry1' || hostname == 'nomsentry2' || hostname == 'beluga') ? eth_main : eth_goerli);
+    if (check == 'eth') {
+      let eth_check = ( check_net == 'mainnet' ? eth_main : eth_goerli);
       pub_block = await getEthBlock(eth_check);
       if (pub_block === false) {
         console.error('Error Fetching Public ETH Block');
         process.exit(1);
       }
-      if (coin == 'eth' && node_type == 'sentry') {
-        let iname = 'vlan411';
-        let vlan_ip = execSync(`/usr/sbin/ip -4 -o addr show ${iname} | tr -s ' ' | cut -d ' ' -f 4 | cut -d '/' -f 1`).toString().trim();
-        eth_local = `http://${vlan_ip}:8545`;
-      }
-      console.log('Eth Local Host', eth_local);
-      local_block = await getEthBlock(eth_local);
+      if (!check_host) check_host = eth_local;
+      console.log('Eth Local Host', check_host);
+      local_block = await getEthBlock(check_host);
     } else {
-      let nom_check = ( (hostname == 'nomsentry1' || hostname == 'nomsentry2' || hostname == 'beluga') ? onomy_main : onomy_testnet);
+      let nom_check = ( check_net == 'mainnet' ? onomy_main : onomy_testnet);
       pub_block = await getOnomyBlock(nom_check);
       if (pub_block === false) {
         console.error('Error Fetching Public Onomy Block');
         process.exit(1);
       }
-      local_block = await getOnomyBlock(onomy_local);
+      if (!check_host) check_host = onomy_local;
+      console.log('Onomy Local Host', check_host);
+      local_block = await getOnomyBlock(check_host);
     }
 
-    console.log(`${coin} Pub`, pub_block);
-    console.log(`${coin} Local`, local_block);
+    console.log(`${check} Pub Block`, pub_block);
+    console.log(`${check} Local Block`, local_block);
     if (pub_block && local_block) {
       diff = pub_block - local_block;
-      console.log(`${coin} Diff`, diff);
+      console.log(`${check} Diff`, diff);
     }
-    let file = `${path}/${coin}_status.json`;
+    let file = `${path}/${check}_status.json`;
     let status = {diffs: []};
     if (fs.existsSync(file)) {
       status = require(file);
@@ -188,18 +193,15 @@ checkBlockStatus = async function() {
     // console.log('Bad Count', bad_cnt);
     if (bad_cnt >= 5 || diff >= 20) {
       // Unhealthy after 5 bad checks in a row
-      console.error(`${coin} Node UNHEALTHY`, diff);
+      console.error(`${check} Node UNHEALTHY`, diff);
       return false;
     } else {
-      console.log(`${coin} Node HEALTHY`, diff)
+      console.log(`${check} Node HEALTHY`, diff)
       return true;
     }
   } catch (err) {
     console.error(err);
     return false;
-  }
-  if (diff === false) {
-    throw Error('Error checking Block Status', );
   }
 }
 
@@ -249,12 +251,13 @@ getOnomyBlock = async function(host) {
   }
 }
 
-pingHealthcheck = async function(healthcheck_uid, healthy) {
+pingHealthcheck = async function(healthcheck_slug, healthy) {
   try {
-    let ping_url = `https://hc-ping.com/${healthcheck_uid}`;
+    let ping_url = `https://hc-ping.com/${healthchecks.healthcheckio_ping_key}/${healthcheck_slug}`;
     if (!healthy) {
       ping_url = `${ping_url}/fail`;
     }
+    console.log('URL', ping_url);
     let response = await axios({
       url: ping_url,
     });

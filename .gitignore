@@ -1,2 +1,5 @@
 node_modules
 healthchecks.prod.json
+eth_status.json
+onomy_status.json
+onomy_orchestrator_status.json
