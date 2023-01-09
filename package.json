@@ -1,11 +1,10 @@
 {
-  "name": "CoinMonitor",
+  "name": "OnomyMonitor",
   "version": "1.0.0",
   "main": "monitor.js",
   "author": "Matt Taylor",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.24.0",
-    "web3": "^1.6.0"
+    "axios": "^1.2.2"
   }
 }
