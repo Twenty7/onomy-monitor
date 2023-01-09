@@ -26,8 +26,8 @@ if (!healthchecks.etherscan_api_key) {
   console.error('Missing config.json etherscan_api_key');
   process.exit();
 }
-if (!healthchecks.healthcheckio_ping_key) {
-  console.error('Missing config.json healthcheckio_ping_key');
+if (!healthchecks.healthchecksio_ping_key) {
+  console.error('Missing config.json healthchecksio_ping_key');
   process.exit();
 }
 
@@ -257,7 +257,7 @@ getOnomyBlock = async function(host) {
 
 pingHealthcheck = async function(healthcheck_slug, healthy) {
   try {
-    let ping_url = `https://hc-ping.com/${healthchecks.healthcheckio_ping_key}/${healthcheck_slug}`;
+    let ping_url = `https://hc-ping.com/${healthchecks.healthchecksio_ping_key}/${healthcheck_slug}`;
     if (!healthy) {
       ping_url = `${ping_url}/fail`;
     }
