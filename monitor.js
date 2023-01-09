@@ -262,7 +262,7 @@ pingHealthcheck = async function(healthcheck_slug, healthy) {
     if (!healthy) {
       ping_url = `${ping_url}/fail`;
     }
-    console.log('URL', ping_url);
+    // console.log('URL', ping_url);
     let response = await axios({
       url: ping_url,
     });

@@ -11,13 +11,13 @@
 
 
 # Eth Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/lila/healthcheck.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log 2>&1
 
 # Onomyd Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/lila/healthcheck.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log 2>&1
 
 # Onomyd Orchestrator Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js onomy_orchestrator mainnet >> /var/log/lila/healthcheck.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js onomy_orchestrator mainnet >> /var/log/onomy-monitor.log 2>&1
 
 
 
