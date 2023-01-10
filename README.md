@@ -42,7 +42,7 @@ cp config.example.json config.json
 
  * Add Crontab entries on each node for each process.  `crontab -e`
 ```
-* * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log
-* * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log
-* * * * * /usr/local/onomy-monitor/monitor.js onomy_orchestrator mainnet >> /var/log/onomy-monitor.log
+* * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log 2>&1
+* * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log 2>&1
+* * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_orchestrator mainnet >> /var/log/onomy-monitor.log 2>&1'
 ```

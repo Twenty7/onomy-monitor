@@ -62,7 +62,7 @@ run = async function() {
     await sleep(sleep_time);
     let check_slug = check.replace('_', '-');
     let healthcheck_slug = `${hostname}-${check_slug}`;
-    console.error('Healthcheck Slug', healthcheck_slug);
+    console.log('Healthcheck Slug', healthcheck_slug);
 
     // Check Block
     let healthy = false;
@@ -72,7 +72,7 @@ run = async function() {
       healthy = await checkOrchestratorStatus(hostname);
     }
 
-    console.log('HEALTHY', {check, hostname, healthcheck_slug, healthy});
+    console.log('HEALTH', {check, check_net, hostname, healthcheck_slug, healthy});
 
     pingHealthcheck(healthcheck_slug, healthy);
   } catch (err) {
