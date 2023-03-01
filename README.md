@@ -11,7 +11,7 @@ A Command Line / Cron tool for verifying Eth & Onomy Block Heights as well as Or
  * Installed [omg](https://github.com/dotneko/omg)
  * onomyd & omg in PATH
  * Free Etherscan.io Account & [API Key](https://etherscan.io/myapikey)
- * Free Healthcheck.io Account & Ping Key (Look within project settings to define your Ping Key)
+ * Free Healthchecks.io Account & Ping Key (Look within project settings to define your Ping Key)
 
 ## Installation
 Clone Repository & Install Dependencies
@@ -29,7 +29,7 @@ cp config.example.json config.json
 
  * In your healthchecks.io Project, you will need to create checks for each process and node you want to monitor. One for `eth`, another for `onomy`, and another for `onomy orchestrator`. Name each check using the node `hostname` and previous process type. The monitor script uses a 'slug' based check that will create a URL from the Check Name, so they must be exact. It is recommended to set a Period of 5 minutes and Grace Time of 11 minutes, adjust as desired to be more or less sensitive.
  
- Healthcheck.io Name Examples for two sentry nodes and one validator node:
+ Healthchecks.io Name Examples for two sentry nodes and one validator node:
 ```
  nomsentry1 Eth
  nomsentry1 Onomy
