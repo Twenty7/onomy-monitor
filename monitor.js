@@ -15,11 +15,11 @@ let eth_goerli = `https://api-goerli.etherscan.io/api?module=proxy&action=eth_bl
 let eth_local = 'http://localhost:8545';
 
 // Onomy
-let onomy_main = 'http://44.213.44.5:26657';
+let onomy_main = 'https://rpc-mainnet.onomy.io';
 // let onomy_testnet1 = 'https://api-onomy.nodes.guru';
 // let onomy_testnet = 'http://testnet1.onomy.io:26657';
 // let onomy_testnet = 'http://64.9.136.119:26657'
-let onomy_testnet = 'http://3.88.76.0:26657'
+let onomy_testnet = 'http://rpc-testnet.onomy.io'
 let onomy_local = 'http://localhost:26657';
 
 if (!healthchecks.etherscan_api_key) {
