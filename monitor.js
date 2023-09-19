@@ -5,28 +5,23 @@ const os = require("os");
 const { execSync } = require('child_process');
 let hostname = os.hostname();
 let path = __dirname;
-let healthchecks = require(`${path}/config.json`);
+let config = require(`${path}/config.json`);
 
-// ETH
-// let eth_main = 'https://nodes.mewapi.io/rpc/eth';
-// todo: Check API Rate Limit
-let eth_main = `https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${healthchecks.etherscan_api_key}`;
-let eth_goerli = `https://api-goerli.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${healthchecks.etherscan_api_key}`;
-let eth_local = 'http://localhost:8545';
+// Host Config
+let hosts = config.hosts;
+if (!hosts.eth.public) {
+  hosts.eth.public = {
+    mainnet: `https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${config.etherscan_api_key}`,
+    testnet: `https://api-goerli.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${config.etherscan_api_key}`,
+  };
+}
+let validator_name = config.validator_name;
 
-// Onomy
-let onomy_main = 'https://rpc-mainnet.onomy.io';
-// let onomy_testnet1 = 'https://api-onomy.nodes.guru';
-// let onomy_testnet = 'http://testnet1.onomy.io:26657';
-// let onomy_testnet = 'http://64.9.136.119:26657'
-let onomy_testnet = 'http://rpc-testnet.onomy.io'
-let onomy_local = 'http://localhost:26657';
-
-if (!healthchecks.etherscan_api_key) {
+if (!config.etherscan_api_key) {
   console.error('Missing config.json etherscan_api_key');
   process.exit();
 }
-if (!healthchecks.healthchecksio_ping_key) {
+if (!config.healthchecksio_ping_key) {
   console.error('Missing config.json healthchecksio_ping_key');
   process.exit();
 }
@@ -39,7 +34,7 @@ console.log('Args: ', args);
 check_net = 'mainnet';
 check_host = null;
 if (!args.length) {
-  console.error(`${path}/monitor.js eth|onomy|onomy_orchestrator mainnet|testnet [http://localhost:8545]`);
+  console.error(`${path}/monitor.js eth|onomy|onomy_validator|onex mainnet|testnet [http://localhost:8545]`);
   process.exit();
 }
 if (args.length) {
@@ -61,15 +56,15 @@ run = async function() {
     // Random Sleep to Avoid API Rate Limit Issues
     await sleep(sleep_time);
     let check_slug = check.replace('_', '-');
-    let healthcheck_slug = `${hostname}-${check_slug}`;
+    let healthcheck_slug = `${hostname}-${check_slug}-${check_net}`;
     console.log('Healthcheck Slug', healthcheck_slug);
 
     // Check Block
     let healthy = false;
-    if (check == 'eth' || check == 'onomy') {
+    if (check == 'onomy_validator') { // Check Validator
+      healthy = await checkOnomyValidatorStatus(hostname);
+    } else { // Check Validator
       healthy = await checkBlockStatus();
-    } else if (check == 'onomy_orchestrator') { // Check Orchestrator
-      healthy = await checkOrchestratorStatus(hostname);
     }
 
     console.log('HEALTH', {check, check_net, hostname, healthcheck_slug, healthy});
@@ -80,29 +75,28 @@ run = async function() {
   }
 }
 
-checkOrchestratorStatus = async function(hostname) {
+checkOnomyValidatorStatus = async function(hostname) {
   try {
-    console.log('Checking Orchestrator Status');
-    let val_address = execSync(`omg validator show Cosmos.Holdings`).toString().trim();
+    console.log('Checking Validator Status', validator_name);
+    let val_address = execSync(`omg validator show ${validator_name}`).toString().trim();
     console.log('Val Address', val_address);
+    if (!val_address) {
+      console.error("Cannot determine validator address");
+      return false;
+    }
     let json = execSync(`onomyd -o json query staking validator ${val_address}`);
     let vstatus = JSON.parse(json);
     let online = true;
     if (vstatus.jailed) {
-      console.error(`Onomy Orchestrator ${hostname} JAILED`);
+      console.error(`Onomy Validator ${hostname} ${validator_name}`, 'JAILED');
       online = false;
     }
     if (vstatus.status != 'BOND_STATUS_BONDED') {
-      console.error(`Onomy Orchestrator ${hostname} Status: ${vstatus.status}`);
-      online = false;
-    }
-    let running = execSync(`ps aux | grep gbt -a`);
-    if (running.indexOf('cosmos') === -1 ) {
-      console.error(`Onomy Orchestrator ${hostname} NOT RUNNING`);
+      console.error(`Onomy Validator ${hostname} ${validator_name} Status: ${vstatus.status}`);
       online = false;
     }
 
-    // Record Orchestrator Status
+    // Record Validator Status
     let file = `${path}/${check}_status.json`;
     let status = {vals: []};
     if (fs.existsSync(file)) {
@@ -115,25 +109,9 @@ checkOrchestratorStatus = async function(hostname) {
     let status_str = JSON.stringify(status, null, 2);
     fs.writeFileSync(file, status_str);
 
-    // Verify Recent Status Checks
-    let bad_cnt = 0;
-    for (let idx = status.vals.length; idx >= 0; idx--) {
-      let cval = status.vals[idx];
-      if (cval === false) {
-        bad_cnt++;
-      } else {
-        bad_cnt = 0;
-      }
-    }
     console.log('Online', online);
-    console.log('Bad Cnt', bad_cnt);
-    if (!online && bad_cnt == 5) { // Only Restart at exactly 5 bad checks in a row
-      console.error('Orchestrator NEEDS RESTART');
-      // console.log('Restarting Validator...(disabled)');
-      // execSync('sudo systemctl restart onomy_orchestrator.service');
-    }
 
-    return (bad_cnt >= 3 ? false : true);
+    return (online ? true : false);
   } catch (err) {
     console.error(err);
     return false;
@@ -143,26 +121,32 @@ checkOrchestratorStatus = async function(hostname) {
 checkBlockStatus = async function() {
   let diff = false;
   try {
-    if (check == 'eth') {
-      let eth_check = ( check_net == 'mainnet' ? eth_main : eth_goerli);
+    if (check == 'eth') { // Eth
+      let eth_check = hosts.eth.public[check_net];
       pub_block = await getEthBlock(eth_check);
       if (pub_block === false) {
-        console.error('Error Fetching Public ETH Block');
+        console.error(`Error Fetching Public ETH Block ${check_net}`, eth_check);
         process.exit(1);
       }
-      if (!check_host) check_host = eth_local;
-      console.log('Eth Local Host', check_host);
+      if (!check_host) check_host = hosts.eth.local[check_net];
+      console.log(`Eth Local  ${check_net} Host`, check_host);
       local_block = await getEthBlock(check_host);
-    } else {
-      let nom_check = ( check_net == 'mainnet' ? onomy_main : onomy_testnet);
+      if (local_block === false) {
+        console.error(`Error Fetching Local Eth Block ${check_net}`, check_host);
+      }
+    } else { // Onomy / Onex
+      let nom_check = hosts[check]['public'][check_net];
       pub_block = await getOnomyBlock(nom_check);
       if (pub_block === false) {
-        console.error('Error Fetching Public Onomy Block');
+        console.error(`Error Fetching Public ${check} Block ${check_net}`, nom_check);
         process.exit(1);
       }
-      if (!check_host) check_host = onomy_local;
-      console.log('Onomy Local Host', check_host);
+      if (!check_host) check_host = hosts[check]['local'][check_net];
+      console.log(`${check} Local ${check_net} Host`, check_host);
       local_block = await getOnomyBlock(check_host);
+      if (local_block === false) {
+        console.error(`Error Fetching Local ${check} Block ${check_net}`, check_host);
+      }
     }
 
     console.log(`${check} Pub Block`, pub_block);
@@ -171,7 +155,7 @@ checkBlockStatus = async function() {
       diff = pub_block - local_block;
       console.log(`${check} Diff`, diff);
     }
-    let file = `${path}/${check}_status.json`;
+    let file = `${path}/${check}_${check_net}_status.json`;
     let status = {diffs: []};
     if (fs.existsSync(file)) {
       status = require(file);
@@ -198,10 +182,10 @@ checkBlockStatus = async function() {
     // console.log('Bad Count', bad_cnt);
     if (bad_cnt >= 5 || diff >= 20) {
       // Unhealthy after 5 bad checks in a row
-      console.error(`${check} Node UNHEALTHY`, diff);
+      console.error(`${check} ${check_net} Node UNHEALTHY`, diff);
       return false;
     } else {
-      console.log(`${check} Node HEALTHY`, diff)
+      console.log(`${check} ${check_net} Node HEALTHY`, diff)
       return true;
     }
   } catch (err) {
@@ -237,9 +221,10 @@ getEthBlock = async function(host) {
 getOnomyBlock = async function(host) {
   try {
     // let params = {id: 1, jsonrpc: "2.0", method: "abci_info", "params": []};
+    let ts = Math.floor(new Date().getTime() / 1000);
     let response = await axios({
       // method: 'post',
-      url: `${host}/abci_info?`,
+      url: `${host}/abci_info?${ts}`,
       // data: params,
     });
 
@@ -258,7 +243,7 @@ getOnomyBlock = async function(host) {
 
 pingHealthcheck = async function(healthcheck_slug, healthy) {
   try {
-    let ping_url = `https://hc-ping.com/${healthchecks.healthchecksio_ping_key}/${healthcheck_slug}`;
+    let ping_url = `https://hc-ping.com/${config.healthchecksio_ping_key}/${healthcheck_slug}`;
     if (!healthy) {
       ping_url = `${ping_url}/fail`;
     }

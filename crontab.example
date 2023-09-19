@@ -16,8 +16,11 @@
 # Onomyd Monitor
 # * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log 2>&1
 
+# Onexd Monitor
+# * * * * * /usr/local/onomy-monitor/monitor.js onex mainnet >> /var/log/onomy-monitor.log 2>&1
+
 # Onomyd Orchestrator Monitor
-# * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_orchestrator mainnet >> /var/log/onomy-monitor.log 2>&1'
+# * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log 2>&1'
 
 
 
