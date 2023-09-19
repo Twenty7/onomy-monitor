@@ -49,7 +49,8 @@ The first example should result in a Healthcheck slug of `nomsentry1-eth-mainnet
 
  * Add Crontab entries on each node for each process.  `crontab -e`
 ```
-* * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log 2>&1
-* * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log 2>&1
-* * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log 2>&1'
+* * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log
+* * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log
+* * * * * /usr/local/onomy-monitor/monitor.js onex mainnet >> /var/log/onomy-monitor.log
+* * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log'
 ```

@@ -11,16 +11,16 @@
 
 
 # Eth Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js eth mainnet >> /var/log/onomy-monitor.log
 
 # Onomyd Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log
 
 # Onexd Monitor
-# * * * * * /usr/local/onomy-monitor/monitor.js onex mainnet >> /var/log/onomy-monitor.log 2>&1
+# * * * * * /usr/local/onomy-monitor/monitor.js onex mainnet >> /var/log/onomy-monitor.log
 
-# Onomyd Orchestrator Monitor
-# * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log 2>&1'
+# Onomyd Validator Monitor
+# * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log'
 
 
 
