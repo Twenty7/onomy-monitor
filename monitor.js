@@ -120,6 +120,7 @@ checkOnomyValidatorStatus = async function(hostname) {
 
 checkBlockStatus = async function() {
   let diff = false;
+  let local_block_time_valid = true;
   try {
     if (check == 'eth') { // Eth
       let eth_check = hosts.eth.public[check_net];
@@ -147,11 +148,16 @@ checkBlockStatus = async function() {
       if (local_block === false) {
         console.error(`Error Fetching Local ${check} Block ${check_net}`, check_host);
       }
+      if (local_block) {
+        // Check Local Block Time
+        local_block_time_valid = await getOnomyBlockTime(check_host);
+        console.log('Local Block Time Valid', local_block_time_valid);
+      }
     }
 
     console.log(`${check} Pub Block`, pub_block);
     console.log(`${check} Local Block`, local_block);
-    if (pub_block && local_block) {
+    if (pub_block && local_block && local_block_time_valid) {
       diff = pub_block - local_block;
       console.log(`${check} Diff`, diff);
     }
@@ -232,6 +238,33 @@ getOnomyBlock = async function(host) {
       let json = response.data.result;
       return json.response.last_block_height;
       // return parseInt(hex, 16);
+    } else {
+      return false;
+    }
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+getOnomyBlockTime = async function(host) {
+  try {
+    // let params = {id: 1, jsonrpc: "2.0", method: "status", "params": []};
+    let ts = Math.floor(new Date().getTime() / 1000);
+    let response = await axios({
+      // method: 'post',
+      url: `${host}/status?${ts}`,
+      // data: params,
+    });
+
+    if (response.status == 200) {
+      let json = response.data.result;
+      let ts = new Date(json.sync_info.latest_block_time);
+      let two_min = 2*60*1000;
+      if (new Date() - ts < two_min) {
+        return true;
+      }
+      return false;
     } else {
       return false;
     }
