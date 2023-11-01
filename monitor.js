@@ -276,6 +276,7 @@ getOnomyBlockTime = async function(host) {
 
 pingHealthcheck = async function(healthcheck_slug, healthy) {
   try {
+    healthcheck_slug = healthcheck_slug.toLowerCase();
     let ping_url = `https://hc-ping.com/${config.healthchecksio_ping_key}/${healthcheck_slug}`;
     if (!healthy) {
       ping_url = `${ping_url}/fail`;

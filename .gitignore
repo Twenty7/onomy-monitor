@@ -1,5 +1,3 @@
 node_modules
 config.json
-eth_status.json
-onomy_status.json
-onomy_orchestrator_status.json
+*_status.json
