@@ -22,7 +22,7 @@
     "onex": {
       "public": {
         "mainnet": "http://:36657",
-        "testnet": "http://34.134.208.167:36657"
+        "testnet": "https://rpc-onex.decentrio.ventures"
       },
       "local": {
         "mainnet": "http://localhost:26757",
