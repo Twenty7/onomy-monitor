@@ -50,11 +50,12 @@ if (args.length >= 3) {
 
 run = async function() {
   try {
-
-    // let sleep_time = sleepTime();
-    // console.log(`Sleeping for ${sleep_time}ms`, check);
-    // // Random Sleep to Avoid API Rate Limit Issues
-    // await sleep(sleep_time);
+    if (check == 'eth') {
+      // Random Sleep to Avoid Public API Rate Limit Issues
+      let sleep_time = sleepTime();
+      console.log(`Sleeping for ${sleep_time}ms`, check);
+      await sleep(sleep_time);
+    }
 
     let check_slug = check.replace('_', '-');
     let healthcheck_slug = `${hostname}-${check_slug}-${check_net}`;
