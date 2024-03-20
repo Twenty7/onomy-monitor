@@ -126,15 +126,16 @@ checkHermes = async function(host) {
     if (!check_host) {
       check_host = hosts.hermes.local[check_net];
     }
+    check_host = `${check_host}/metrics`;
     console.log('Checking Hermes Status', check_host);
 
     let response = await axios({
-      url: `${check_host}/metrics`,
+      url: `${check_host}`,
     });
 
     let resp = null;
     if (response.status == 200) {
-      resp = response.data.result;
+      resp = response.data;
     } else {
       console.error('Invalid Response from Hermes. Code: ', response.status);
       return false;
@@ -204,14 +205,14 @@ checkHermes = async function(host) {
       status = require(file);
     }
     // Add to top of array
-    status.vals.unshift(online);
+    status.vals.unshift(healthy);
     // Splice to 10 (10 minutes)
     status.vals = status.vals.slice(0, 10);
     let status_str = JSON.stringify(status, null, 2);
     fs.writeFileSync(file, status_str);
 
 
-    return (online ? true : false);
+    return (healthy ? true : false);
   } catch (err) {
     console.error(err);
     return false;
