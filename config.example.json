@@ -28,6 +28,12 @@
         "mainnet": "http://localhost:26757",
         "testnet": "http://localhost:26757"
       }
+    },
+    "hermes": {
+      "local": {
+        "mainnet": "http://localhost:3001",
+        "testnet": "http://localhost:3001"
+      }
     }
   }
 }

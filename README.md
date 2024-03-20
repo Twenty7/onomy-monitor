@@ -44,6 +44,7 @@ cp config.example.json config.json
  nomvalidator Onomy Mainnet
  nomvalidator Onex Mainnet
  nomvalidator Onomy Validator Mainnet
+ hermes Mainnet
 ```
 The first example should result in a Healthcheck slug of `nomsentry1-eth-mainnet`
 
@@ -53,4 +54,5 @@ The first example should result in a Healthcheck slug of `nomsentry1-eth-mainnet
 * * * * * /usr/local/onomy-monitor/monitor.js onomy mainnet >> /var/log/onomy-monitor.log
 * * * * * /usr/local/onomy-monitor/monitor.js onex mainnet >> /var/log/onomy-monitor.log
 * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log'
+* * * * * /usr/local/onomy-monitor/monitor.js hermes mainnet >> /var/log/onomy-monitor.log
 ```

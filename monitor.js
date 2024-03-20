@@ -34,7 +34,7 @@ console.log('Args: ', args);
 check_net = 'mainnet';
 check_host = null;
 if (!args.length) {
-  console.error(`${path}/monitor.js eth|onomy|onomy_validator|onex mainnet|testnet [http://localhost:8545]`);
+  console.error(`${path}/monitor.js eth|onomy|onomy_validator|onex|hermes mainnet|testnet [http://localhost:8545]`);
   process.exit();
 }
 if (args.length) {
@@ -51,10 +51,11 @@ if (args.length >= 3) {
 run = async function() {
   try {
 
-    let sleep_time = sleepTime();
-    console.log(`Sleeping for ${sleep_time}ms`, check);
-    // Random Sleep to Avoid API Rate Limit Issues
-    await sleep(sleep_time);
+    // let sleep_time = sleepTime();
+    // console.log(`Sleeping for ${sleep_time}ms`, check);
+    // // Random Sleep to Avoid API Rate Limit Issues
+    // await sleep(sleep_time);
+
     let check_slug = check.replace('_', '-');
     let healthcheck_slug = `${hostname}-${check_slug}-${check_net}`;
     console.log('Healthcheck Slug', healthcheck_slug);
@@ -63,7 +64,9 @@ run = async function() {
     let healthy = false;
     if (check == 'onomy_validator') { // Check Validator
       healthy = await checkOnomyValidatorStatus(hostname);
-    } else { // Check Validator
+    } else if (check == 'hermes') { // Check Hermes IBC Relayer
+      healthy = await checkHermes();
+    } else { // Check Sentry
       healthy = await checkBlockStatus();
     }
 
@@ -116,6 +119,114 @@ checkOnomyValidatorStatus = async function(hostname) {
     console.error(err);
     return false;
   }
+}
+
+checkHermes = async function(host) {
+  try {
+    if (!check_host) {
+      check_host = hosts.hermes.local[check_net];
+    }
+    console.log('Checking Hermes Status', check_host);
+
+    let response = await axios({
+      url: `${check_host}/metrics`,
+    });
+
+    let resp = null;
+    if (response.status == 200) {
+      resp = response.data.result;
+    } else {
+      console.error('Invalid Response from Hermes. Code: ', response.status);
+      return false;
+    }
+
+    let healthy = true;
+
+    resp = resp.split("\n");
+    let counts = {
+      onex_status: 0,
+      onomy_status: 0,
+      backlog_size: 0,
+      workers: 0,
+    };
+    for (let i = 0; i < resp.length; i++) {
+      let line = resp[i];
+      let s1 = line.split('{');
+      if (s1.length == 2) {
+        let s2 = s1[1].split('}');
+        if (s2.length == 2) {
+          let key = s1[0];
+          let kvp = `{${s2[0]}}`;
+          let stat = s2[1].trim();
+          // console.log(key, {kvp, stat});
+          if (key == 'queries_total') {
+            let json = this.parseKvp(kvp);
+            if (['status', 'rpc_status', 'grpc_status'].includes(json.query_type)) {
+              // Only Increment Once per Query Type
+              // console.log(key, {json, stat});
+              if (stat >= 1) {
+                if (json.chain.includes('onex-')) counts.onex_status++;
+                if (json.chain.includes('onomy-')) counts.onomy_status++;
+              }
+            }
+          } else if (['backlog_size', 'workers'].includes(key)) {
+            counts[key] += parseInt(stat);
+          }
+        }
+      }
+    }
+
+    console.log('Hermes', counts);
+
+    if (counts.backlog_size > 5) {
+      console.error(`Hermes Backlog High ${hostname} ${validator_name}`, counts.backlog_size);
+      healthy = false;
+    }
+    if (counts.workers < 2) {
+      console.error(`Hermes Worker Count Low ${hostname} ${validator_name}`, counts.workers);
+      healthy = false;
+    }
+    if (counts.onex_status < 3) {
+      console.error(`Hermes Onex Connection Issue ${hostname} ${validator_name}`, counts.onex_status);
+      healthy = false;
+    }
+    if (counts.onex_status < 3) {
+      console.error(`Hermes Onomy Connection Issue ${hostname} ${validator_name}`, counts.onomy_status);
+      healthy = false;
+    }
+
+    console.log('Healthy', healthy);
+
+    // Record Validator Status
+    let file = `${path}/${check}_status.json`;
+    let status = {vals: []};
+    if (fs.existsSync(file)) {
+      status = require(file);
+    }
+    // Add to top of array
+    status.vals.unshift(online);
+    // Splice to 10 (10 minutes)
+    status.vals = status.vals.slice(0, 10);
+    let status_str = JSON.stringify(status, null, 2);
+    fs.writeFileSync(file, status_str);
+
+
+    return (online ? true : false);
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+parseKvp = function(str) {
+  const regex = /([a-z]\w*)=((?:[^"]|"[^"]+")+?)(?=,\s*[a-z]\w*=|$)/g
+  let m;
+  let els = [];
+  while ((m = regex.exec(str)) !== null) {
+    els.push(`"${m[1]}": ${m[2]}`);
+  }
+  const json = '{' + els.join(',') + '}';
+  return JSON.parse(json);
 }
 
 checkBlockStatus = async function() {
