@@ -22,5 +22,7 @@
 # Onomyd Validator Monitor
 # * * * * * bash -lc '/usr/local/onomy-monitor/monitor.js onomy_validator mainnet >> /var/log/onomy-monitor.log'
 
+# Hermes Monitor
+* * * * * /usr/local/onomy-monitor/monitor.js hermes mainnet >> /var/log/onomy-monitor.log
 
 
