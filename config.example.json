@@ -2,6 +2,12 @@
   "etherscan_api_key": "",
   "healthchecksio_ping_key": "",
   "validator_name": "Cosmos.Holdings",
+  "valopers": {
+    "onex": {
+      "mainnet": "",
+      "testnet": ""
+    }
+  },
   "hosts": {
     "eth": {
       "local": {
@@ -12,7 +18,9 @@
     "onomy": {
       "public": {
         "mainnet": "https://rpc-mainnet.onomy.io",
-        "testnet": "http://rpc-testnet.onomy.io"
+        "mainnet_backup": "http://62.20.1.116:26657",
+        "testnet": "http://rpc-testnet.onomy.io",
+        "testnet_backup": "http://34.174.193.189:26657"
       },
       "local": {
         "mainnet": "http://localhost:26657",
@@ -22,7 +30,9 @@
     "onex": {
       "public": {
         "mainnet": "http://:36657",
-        "testnet": "https://rpc-onex.decentrio.ventures"
+        "mainnet_backup": "http://:36657",
+        "testnet": "https://rpc-onex.decentrio.ventures",
+        "testnet_backup": "http://34.134.208.167:36657"
       },
       "local": {
         "mainnet": "http://localhost:26757",

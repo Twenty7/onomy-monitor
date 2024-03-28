@@ -16,6 +16,7 @@ if (!hosts.eth.public) {
   };
 }
 let validator_name = config.validator_name;
+let valopers = config.valopers;
 
 if (!config.etherscan_api_key) {
   console.error('Missing config.json etherscan_api_key');
@@ -34,7 +35,7 @@ console.log('Args: ', args);
 check_net = 'mainnet';
 check_host = null;
 if (!args.length) {
-  console.error(`${path}/monitor.js eth|onomy|onomy_validator|onex|hermes mainnet|testnet [http://localhost:8545]`);
+  console.error(`${path}/monitor.js eth|onomy|onomy_validator|onex_validator|onex|hermes mainnet|testnet [http://localhost:8545]`);
   process.exit();
 }
 if (args.length) {
@@ -63,8 +64,8 @@ run = async function() {
 
     // Check Block
     let healthy = false;
-    if (check == 'onomy_validator') { // Check Validator
-      healthy = await checkOnomyValidatorStatus(hostname);
+    if (check == 'onomy_validator' || check == 'onex_validator') { // Check Validator
+      healthy = await checkOnomyValidatorStatus(check, hostname);
     } else if (check == 'hermes') { // Check Hermes IBC Relayer
       healthy = await checkHermes();
     } else { // Check Sentry
@@ -79,26 +80,40 @@ run = async function() {
   }
 }
 
-checkOnomyValidatorStatus = async function(hostname) {
+checkOnomyValidatorStatus = async function(check, hostname) {
   try {
-    console.log('Checking Validator Status', validator_name);
-    let val_address = execSync(`omg validator show ${validator_name}`).toString().trim();
-    console.log('Val Address', val_address);
-    if (!val_address) {
-      console.error("Cannot determine validator address");
+    let chain = (check == 'onomy_validator' ? 'onomy' : 'onex');
+    let node = hosts[chain]['local'][check_net];
+    console.log(`Checking ${chain} Validator Status on ${check_net} ${node}`, validator_name);
+    let valoper_address = null;
+    if (valopers && valopers[chain] && valopers[chain][check_net]) {
+      valoper_address = valopers[chain][check_net];
+    } else if (chain == 'onomy') {
+      valoper_address = execSync(`omg validator show ${validator_name}`).toString().trim();
+    } else if (chain == 'onex') {
+      // Todo: Automatically fetch valoper_address
+      // valoper_address = execSync(`omg validator show ${validator_name}`).toString().trim();
+    }
+    console.log('Valoper Address', valoper_address);
+    if (!valoper_address) {
+      console.error(`Cannot determine valoper address for ${chain} on ${check_net}`);
       return false;
     }
-    let json = execSync(`onomyd -o json query staking validator ${val_address}`);
+
+    let json = execSync(`${chain}d --node ${node} -o json query staking validator ${valoper_address}`);
     let vstatus = JSON.parse(json);
     let online = true;
     if (vstatus.jailed) {
-      console.error(`Onomy Validator ${hostname} ${validator_name}`, 'JAILED');
+      console.error(`${chain} Validator ${hostname} ${check_net} ${validator_name}`, 'JAILED');
       online = false;
     }
     if (vstatus.status != 'BOND_STATUS_BONDED') {
-      console.error(`Onomy Validator ${hostname} ${validator_name} Status: ${vstatus.status}`);
+      console.error(`${chain} Validator ${hostname} ${check_net} ${validator_name} Status: ${vstatus.status}`);
       online = false;
     }
+
+    // Todo: Ensure Latest Block is Signed by Validator
+    // onexd q block --node http://localhost:26757 | jq '.block.last_commit.signatures'
 
     // Record Validator Status
     let file = `${path}/${check}_status.json`;
@@ -234,6 +249,9 @@ parseKvp = function(str) {
 checkBlockStatus = async function() {
   let diff = false;
   let local_block_time_valid = true;
+  let pub_block = false;
+  let pub_block_bak = false;
+  let local_block = false;
   try {
     if (check == 'eth') { // Eth
       let eth_check = hosts.eth.public[check_net];
@@ -253,7 +271,14 @@ checkBlockStatus = async function() {
       pub_block = await getOnomyBlock(nom_check);
       if (pub_block === false) {
         console.error(`Error Fetching Public ${check} Block ${check_net}`, nom_check);
-        process.exit(1);
+      }
+      if (hosts[check]['public'][`${check_net}_backup`]) {
+        let nom_check_bak = hosts[check]['public'][`${check_net}_backup`];
+        pub_block_bak = await getOnomyBlock(nom_check_bak);
+        if (pub_block_bak === false) {
+          console.error(`Error Fetching Backup Public ${check} Block ${check_net}`, nom_check_bak);
+        }
+        if (pub_block_bak && (!pub_block || pub_block_bak > pub_block)) pub_block = pub_block_bak;
       }
       if (!check_host) check_host = hosts[check]['local'][check_net];
       console.log(`${check} Local ${check_net} Host`, check_host);
@@ -355,7 +380,11 @@ getOnomyBlock = async function(host) {
       return false;
     }
   } catch (err) {
-    console.error(err);
+    if (err.cause) {
+      console.error(err.cause);
+    } else {
+      console.error(err);
+    }
     return false;
   }
 }
@@ -399,7 +428,13 @@ pingHealthcheck = async function(healthcheck_slug, healthy) {
       url: ping_url,
     });
   } catch (err) {
-    console.error(err);
+    if (err.cause) {
+      console.error(err.cause);
+    } else if (err.response) {
+        console.error(err.response.status, err.response.statusText);
+    } else {
+      console.error(err);
+    }
   }
 }
 
