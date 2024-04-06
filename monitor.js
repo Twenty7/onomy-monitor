@@ -6,6 +6,12 @@ const { execSync } = require('child_process');
 let hostname = os.hostname();
 let path = __dirname;
 let config = require(`${path}/config.json`);
+const http = require('http');
+const https = require('https');
+let httpAgent = new http.Agent({ family: 4 });
+let httpsAgent = new https.Agent({ family: 4 });
+axios.defaults.httpAgent = httpAgent;
+axios.defaults.httpsAgent = httpsAgent;
 
 // Host Config
 let hosts = config.hosts;
