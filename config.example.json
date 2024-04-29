@@ -29,8 +29,8 @@
     },
     "onex": {
       "public": {
-        "mainnet": "http://:36657",
-        "mainnet_backup": "http://:36657",
+        "mainnet": "http://65.109.112.144:2001",
+        "mainnet_backup": "http://64.71.153.56:26757",
         "testnet": "https://rpc-onex.decentrio.ventures",
         "testnet_backup": "http://34.134.208.167:36657"
       },
