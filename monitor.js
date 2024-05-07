@@ -376,7 +376,7 @@ getOnomyBlock = async function(host) {
       // method: 'post',
       url: `${host}/abci_info?${ts}`,
       // data: params,
-      timeout: 2000,
+      timeout: 10000,
     });
 
     if (response.status == 200) {
