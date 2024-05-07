@@ -122,7 +122,7 @@ checkOnomyValidatorStatus = async function(check, hostname) {
     // onexd q block --node http://localhost:26757 | jq '.block.last_commit.signatures'
 
     // Record Validator Status
-    let file = `${path}/${check}_${chain}_status.json`;
+    let file = `${path}/${check}_${check_net}_status.json`;
     let status = {vals: []};
     if (fs.existsSync(file)) {
       status = require(file);
