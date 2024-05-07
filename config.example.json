@@ -30,9 +30,9 @@
     "onex": {
       "public": {
         "mainnet": "https://rpc.mainnet.onex.onomy.io",
-        "mainnet_backup": "http://65.109.112.144:2001",
+        "mainnet_backup": "https://rpc-onex.decentrio.ventures",
         "testnet": "https://rpc.testnet.onex.onomy.io",
-        "testnet_backup": "http://34.134.208.167:36657"
+        "testnet_backup": "http://65.109.69.90:2031"
       },
       "local": {
         "mainnet": "http://localhost:26757",
