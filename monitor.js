@@ -122,7 +122,7 @@ checkOnomyValidatorStatus = async function(check, hostname) {
     // onexd q block --node http://localhost:26757 | jq '.block.last_commit.signatures'
 
     // Record Validator Status
-    let file = `${path}/${check}_status.json`;
+    let file = `${path}/${check}_${chain}_status.json`;
     let status = {vals: []};
     if (fs.existsSync(file)) {
       status = require(file);
@@ -376,7 +376,7 @@ getOnomyBlock = async function(host) {
       // method: 'post',
       url: `${host}/abci_info?${ts}`,
       // data: params,
-      timeout: 10000,
+      timeout: 15000,
     });
 
     if (response.status == 200) {
