@@ -18,7 +18,7 @@
     "onomy": {
       "public": {
         "mainnet": "https://rpc-mainnet.onomy.io",
-        "mainnet_backup": "http://62.20.1.116:26657",
+        "mainnet_backup": "https://onomy-mainnet-rpc.autostake.com",
         "testnet": "http://rpc-testnet.onomy.io",
         "testnet_backup": "http://34.174.193.189:26657"
       },
@@ -30,7 +30,7 @@
     "onex": {
       "public": {
         "mainnet": "https://rpc.mainnet.onex.onomy.io",
-        "mainnet_backup": "https://rpc-onex.decentrio.ventures",
+        "mainnet_backup": "https://onex-mainnet-rpc.autostake.com",
         "testnet": "https://rpc.testnet.onex.onomy.io",
         "testnet_backup": "http://65.109.69.90:2031"
       },
