@@ -32,7 +32,7 @@
         "mainnet": "https://rpc.mainnet.onex.onomy.io",
         "mainnet_backup": "https://onex-mainnet-rpc.autostake.com",
         "testnet": "https://rpc.testnet.onex.onomy.io",
-        "testnet_backup": "http://65.109.69.90:2031"
+        "testnet_backup": "http://222.106.187.14:53102"
       },
       "local": {
         "mainnet": "http://localhost:26757",
