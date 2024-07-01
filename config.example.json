@@ -19,8 +19,9 @@
       "public": {
         "mainnet": "https://rpc-mainnet.onomy.io",
         "mainnet_backup": "https://onomy-mainnet-rpc.autostake.com",
-        "testnet": "http://rpc-testnet.onomy.io",
-        "testnet_backup": "http://34.174.193.189:26657"
+        "testnet_old": "http://rpc-testnet.onomy.io",
+        "testnet": "http://180.131.222.73:26657",
+        "testnet_backup": "http://164.152.110.165:26657"
       },
       "local": {
         "mainnet": "http://localhost:26657",
