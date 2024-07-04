@@ -5,13 +5,17 @@ const os = require("os");
 const { execSync } = require('child_process');
 let hostname = os.hostname();
 let path = __dirname;
-let config = require(`${path}/config.json`);
+process.env.NODE_ENV = 'production';
+const config = require("config");
+// let default_config = require(`${path}/config.default.json`);
+// let local_config = require(`${path}/config.json`);
 const http = require('http');
 const https = require('https');
 let httpAgent = new http.Agent({ family: 4 });
 let httpsAgent = new https.Agent({ family: 4 });
-axios.defaults.httpAgent = httpAgent;
-axios.defaults.httpsAgent = httpsAgent;
+axios.default.httpAgent = httpAgent;
+axios.default.httpsAgent = httpsAgent;
+
 
 // Host Config
 let hosts = config.hosts;
@@ -24,10 +28,6 @@ if (!hosts.eth.public) {
 let validator_name = config.validator_name;
 let valopers = config.valopers;
 
-if (!config.etherscan_api_key) {
-  console.error('Missing config.json etherscan_api_key');
-  process.exit();
-}
 if (!config.healthchecksio_ping_key) {
   console.error('Missing config.json healthchecksio_ping_key');
   process.exit();
@@ -256,10 +256,14 @@ checkBlockStatus = async function() {
   let diff = false;
   let local_block_time_valid = true;
   let pub_block = false;
-  let pub_block_bak = false;
+  let pub_blocks = [];
   let local_block = false;
   try {
     if (check == 'eth') { // Eth
+      if (!config.etherscan_api_key) {
+        console.error('Missing config.json etherscan_api_key');
+        process.exit();
+      }
       let eth_check = hosts.eth.public[check_net];
       pub_block = await getEthBlock(eth_check);
       if (pub_block === false) {
@@ -273,19 +277,27 @@ checkBlockStatus = async function() {
         console.error(`Error Fetching Local Eth Block ${check_net}`, check_host);
       }
     } else { // Onomy / Onex
-      let nom_check = hosts[check]['public'][check_net];
-      pub_block = await getOnomyBlock(nom_check);
-      if (pub_block === false) {
-        console.error(`Error Fetching Public ${check} Block ${check_net}`, nom_check);
-      }
-      if (hosts[check]['public'][`${check_net}_backup`]) {
-        let nom_check_bak = hosts[check]['public'][`${check_net}_backup`];
-        pub_block_bak = await getOnomyBlock(nom_check_bak);
-        if (pub_block_bak === false) {
-          console.error(`Error Fetching Backup Public ${check} Block ${check_net}`, nom_check_bak);
+
+      // Build Hosts Array
+      let nom_hosts = hosts[check]['public'][check_net];
+      if (typeof nom_hosts == 'string') {
+        nom_hosts = [nom_hosts];
+        if (hosts[check]['public'][`${check_net}_backup`]) {
+          nom_hosts.push(hosts[check]['public'][`${check_net}_backup`]);
         }
-        if (pub_block_bak && (!pub_block || pub_block_bak > pub_block)) pub_block = pub_block_bak;
       }
+      // Check all Hosts
+      for (let c = 0; c < nom_hosts.length; c++) {
+        let nom_check = nom_hosts[c];
+        let check_block = await getOnomyBlock(nom_check);
+        if (check_block === false) {
+          console.error(`Error Fetching Public ${check} Block ${check_net}`, nom_check);
+        } else {
+          pub_blocks.push(check_block);
+        }
+      }
+      pub_block = Math.max(...pub_blocks);
+      // Check Local Host
       if (!check_host) check_host = hosts[check]['local'][check_net];
       console.log(`${check} Local ${check_net} Host`, check_host);
       local_block = await getOnomyBlock(check_host);

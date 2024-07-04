@@ -1,0 +1,65 @@
+{
+  "etherscan_api_key": "",
+  "healthchecksio_ping_key": "",
+  "validator_name": "Validator.Name",
+  "valopers": {
+    "onex": {
+      "mainnet": "",
+      "testnet": ""
+    }
+  },
+  "hosts": {
+    "eth": {
+      "local": {
+        "mainnet": "http://localhost:8545",
+        "testnet": "http://localhost:8545"
+      }
+    },
+    "onomy": {
+      "public": {
+        "mainnet": [
+          "https://rpc-mainnet.onomy.io",
+          "https://onomy-mainnet-rpc.autostake.com",
+          "http://a.seed.mainnet.onomy.io:26657",
+          "http://b.seed.mainnet.onomy.io:26657"
+        ],
+        "testnet": [
+          "http://rpc-testnet.onomy.io",
+          "http://164.152.110.165:26657",
+          "http://a.node.testnet.onomy.io:26657",
+          "http://b.node.testnet.onomy.io:26657"
+        ]
+      },
+      "local": {
+        "mainnet": "http://localhost:26657",
+        "testnet": "http://localhost:26657"
+      }
+    },
+    "onex": {
+      "public": {
+        "mainnet": [
+          "https://rpc.mainnet.onex.onomy.io",
+          "https://onex-mainnet-rpc.autostake.com",
+          "http://a.node.mainnet.onomy.io:26757",
+          "http://b.node.mainnet.onomy.io:26757"
+        ],
+        "testnet": [
+          "https://rpc.testnet.onex.onomy.io",
+          "http://222.106.187.14:53102",
+          "http://207.211.187.77:26657",
+          "http://164.152.18.192:26657"
+        ]
+      },
+      "local": {
+        "mainnet": "http://localhost:26757",
+        "testnet": "http://localhost:26757"
+      }
+    },
+    "hermes": {
+      "local": {
+        "mainnet": "http://localhost:3001",
+        "testnet": "http://localhost:3001"
+      }
+    }
+  }
+}

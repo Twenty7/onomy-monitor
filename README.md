@@ -26,7 +26,7 @@ npm install
  * Add your Validator Name to config.json
  * Update any Public or Local Hostnames & Ports
 ```
-cp config.example.json config.json
+cp config/production.example.json config/production.json
 ```
 
  * In your healthchecks.io Project, you will need to create checks for each process and node you want to monitor. One for `eth`, another for `onomy`, and another for `onomy orchestrator`. Name each check using the node `hostname` and previous process type. The monitor script uses a 'slug' based check that will create a URL from the Check Name, so they must be exact. It is recommended to set a Period of 5 minutes and Grace Time of 11 minutes, adjust as desired to be more or less sensitive.
