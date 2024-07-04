@@ -5,6 +5,7 @@ const os = require("os");
 const { execSync } = require('child_process');
 let hostname = os.hostname();
 let path = __dirname;
+process.chdir(path);
 process.env.NODE_ENV = 'production';
 const config = require("config");
 // let default_config = require(`${path}/config.default.json`);
@@ -16,10 +17,14 @@ let httpsAgent = new https.Agent({ family: 4 });
 axios.default.httpAgent = httpAgent;
 axios.default.httpsAgent = httpsAgent;
 
+if (!config.hosts) {
+  console.error("Invalid Configuration. Missing 'hosts'");
+  process.exit(1);
+}
 
 // Host Config
 let hosts = config.hosts;
-if (!hosts.eth.public) {
+if (hosts.eth && !hosts.eth.public) {
   hosts.eth.public = {
     mainnet: `https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${config.etherscan_api_key}`,
     testnet: `https://api-goerli.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey=${config.etherscan_api_key}`,
@@ -30,7 +35,7 @@ let valopers = config.valopers;
 
 if (!config.healthchecksio_ping_key) {
   console.error('Missing config.json healthchecksio_ping_key');
-  process.exit();
+  process.exit(1);
 }
 
 
