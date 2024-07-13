@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const exec = require('util').promisify(require('child_process').exec);
 const fs = require('fs');
 const axios = require('axios');
 const os = require("os");
@@ -448,9 +449,13 @@ pingHealthcheck = async function(healthcheck_slug, healthy) {
       ping_url = `${ping_url}/fail`;
     }
     // console.log('URL', ping_url);
-    let response = await axios({
-      url: ping_url,
-    });
+    if (config.curl_for_hcio) {
+      let response = await exec(`curl -s ${ping_url}`);
+    } else {
+      let response = await axios({
+        url: ping_url,
+      });
+    }
   } catch (err) {
     if (err.cause) {
       console.error(err.cause);
