@@ -112,8 +112,9 @@ checkOnomyValidatorStatus = async function(check, hostname) {
       return false;
     }
 
-    let json = execSync(`${chain}d --node ${node} -o json query staking validator ${valoper_address}`);
-    let vstatus = JSON.parse(json);
+    let jsonstr = execSync(`${chain}d --node ${node} -o json query staking validator ${valoper_address}`);
+    let json = JSON.parse(jsonstr.toString());
+    let vstatus = json.validator;
     let online = true;
     if (vstatus.jailed) {
       console.error(`${chain} Validator ${hostname} ${check_net} ${validator_name}`, 'JAILED');
